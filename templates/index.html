@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Home Page{% endblock %}
+
+{% block content %}
     <header>
         <h1>Welcome to the x11games!</h1>
     </header>
@@ -18,8 +14,4 @@
             <button class="game-button">Play Hangman</button>
         </a>
     </main>
-
-    
-</body>
-</html>
-
+{% endblock %}
