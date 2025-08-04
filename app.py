@@ -11,6 +11,10 @@ def read_index():
 def hangman():
     return render_template('games_hangman2.html')
 
+@app.route('/games/headsup')
+def headsup():
+    return render_template('games_headsup.html')
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8000) 
 

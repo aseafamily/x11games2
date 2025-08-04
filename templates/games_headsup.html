@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}🎭 Heads Up! Challenge - X11 Games{% endblock %}
+
+{% block content %}
+<div class="headsup-container">
+  <header class="headsup-header">
+    <h1>🎭 HEADS UP! CHALLENGE</h1>
+    <p style="color: #ffa500; font-size: clamp(1rem, 2.5vw, 1.2rem); text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);">
+      🎪 Give clues! Guess the word! Beat the clock!
+    </p>
+    <div style="margin-top: 1rem;">
+      <a href="/" style="color: #00ffff; text-decoration: none; font-size: 0.9rem; opacity: 0.8;">← Back to Game Hub</a>
+    </div>
+  </header>
+
+  <!-- Category Selection Screen -->
+  <div id="category-screen" class="game-screen active">
+    <div class="game-area">
+      <h2>🎯 Choose Your Category</h2>
+      <div class="category-grid">
+        <button class="category-button" data-category="sports">
+          ⚽ Sports
+          <div class="category-desc">Athletes, teams, sports terms</div>
+        </button>
+        <button class="category-button" data-category="countries">
+          🌍 Countries
+          <div class="category-desc">Nations and world places</div>
+        </button>
+        <button class="category-button" data-category="animals">
+          🦁 Animals
+          <div class="category-desc">Wild and domestic creatures</div>
+        </button>
+        <button class="category-button" data-category="movies">
+          🎬 Movies
+          <div class="category-desc">Popular films and cinema</div>
+        </button>
+        <button class="category-button" data-category="food">
+          🍕 Food
+          <div class="category-desc">Dishes and cuisines</div>
+        </button>
+        <button class="category-button" data-category="professions">
+          👔 Jobs
+          <div class="category-desc">Careers and professions</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Setup Screen -->
+  <div id="setup-screen" class="game-screen">
+    <div class="game-area">
+      <h2>🎮 Game Setup</h2>
+      <div class="setup-content">
+        <div class="setup-section">
+          <h3>📱 How to Play:</h3>
+          <ol class="instructions">
+            <li>One player holds the device on their forehead</li>
+            <li>Other players give clues about the word they see</li>
+            <li>Tilt device DOWN for correct guess</li>
+            <li>Tilt device UP to skip/pass</li>
+            <li>Beat the clock to score points!</li>
+          </ol>
+        </div>
+        
+        <div class="setup-section">
+          <label for="round-time">⏱️ Round Time:</label>
+          <select id="round-time" class="time-selector">
+            <option value="30">30 seconds</option>
+            <option value="60" selected>1 minute</option>
+            <option value="90">90 seconds</option>
+            <option value="120">2 minutes</option>
+          </select>
+        </div>
+
+        <button id="start-game-btn" class="start-button">🚀 Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Countdown Screen -->
+  <div id="countdown-screen" class="game-screen">
+    <div class="game-area">
+      <div class="countdown-display">
+        <h2>Get Ready!</h2>
+        <div id="countdown-number" class="countdown-number">3</div>
+        <div class="countdown-text">Place device on forehead and tilt to play!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Play Screen -->
+  <div id="game-screen" class="game-screen">
+    <div class="game-play-area">
+      <!-- Timer -->
+      <div class="timer-section">
+        <div id="timer-display" class="timer-display">01:00</div>
+        <div class="timer-bar">
+          <div id="timer-progress" class="timer-progress"></div>
+        </div>
+      </div>
+
+      <!-- Score -->
+      <div class="score-section">
+        <div class="score-display">
+          <span class="score-label">Score:</span>
+          <span id="score-value" class="score-value">0</span>
+        </div>
+      </div>
+
+      <!-- Word Display -->
+      <div class="word-section">
+        <div id="current-word" class="current-word">EXAMPLE</div>
+        <div class="category-label">
+          Category: <span id="current-category">Sports</span>
+        </div>
+      </div>
+
+      <!-- Controls (for non-tilt devices) -->
+      <div class="controls-section">
+        <button id="correct-btn" class="control-button correct-button">
+          ✅ Correct!
+        </button>
+        <button id="skip-btn" class="control-button skip-button">
+          ⏭️ Skip
+        </button>
+      </div>
+
+      <!-- Tilt Instructions -->
+      <div class="tilt-instructions">
+        <div class="tilt-instruction">
+          <div class="tilt-icon down">📱⬇️</div>
+          <div>Tilt DOWN for Correct</div>
+        </div>
+        <div class="tilt-instruction">
+          <div class="tilt-icon up">📱⬆️</div>
+          <div>Tilt UP to Skip</div>
+        </div>
+      </div>
+
+      <!-- Pause Button -->
+      <button id="pause-btn" class="pause-button">⏸️</button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div id="results-screen" class="game-screen">
+    <div class="game-area">
+      <h2>🏆 Game Over!</h2>
+      <div class="results-content">
+        <div class="final-score">
+          <div class="score-circle">
+            <span id="final-score" class="final-score-number">0</span>
+            <span class="score-label">Points</span>
+          </div>
+        </div>
+        
+        <div class="results-stats">
+          <div class="stat-row">
+            <span>Correct Guesses:</span>
+            <span id="correct-count">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Skipped:</span>
+            <span id="skipped-count">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Success Rate:</span>
+            <span id="success-rate">0%</span>
+          </div>
+        </div>
+
+        <div class="word-review">
+          <h3>📝 Words Played:</h3>
+          <div id="words-list" class="words-list"></div>
+        </div>
+
+        <div class="results-actions">
+          <button id="play-again-btn" class="play-again-button">🔄 Play Again</button>
+          <button id="change-category-btn" class="change-category-button">🎯 Change Category</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Game data
+const categories = {
+  sports: [
+    'Football', 'Basketball', 'Soccer', 'Tennis', 'Baseball', 'Hockey', 'Golf', 'Swimming',
+    'Running', 'Boxing', 'Wrestling', 'Cricket', 'Rugby', 'Volleyball', 'Badminton',
+    'Table Tennis', 'Skiing', 'Snowboarding', 'Surfing', 'Cycling', 'Marathon', 'Olympics',
+    'Stadium', 'Coach', 'Referee', 'Championship', 'Tournament', 'League', 'Team', 'Player',
+    'Athlete', 'Medal', 'Trophy', 'Score', 'Goal', 'Touchdown', 'Home Run', 'Slam Dunk'
+  ],
+  countries: [
+    'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'United Kingdom', 'France',
+    'Germany', 'Italy', 'Spain', 'Russia', 'China', 'Japan', 'India', 'Australia',
+    'Egypt', 'South Africa', 'Nigeria', 'Kenya', 'Morocco', 'Turkey', 'Greece',
+    'Sweden', 'Norway', 'Denmark', 'Netherlands', 'Belgium', 'Switzerland', 'Austria',
+    'Poland', 'Portugal', 'Ireland', 'Iceland', 'Finland', 'New Zealand', 'Thailand',
+    'Vietnam', 'South Korea', 'Philippines', 'Indonesia', 'Singapore', 'Malaysia'
+  ],
+  animals: [
+    'Lion', 'Tiger', 'Elephant', 'Giraffe', 'Zebra', 'Monkey', 'Gorilla', 'Chimpanzee',
+    'Bear', 'Wolf', 'Fox', 'Deer', 'Rabbit', 'Squirrel', 'Cat', 'Dog', 'Horse',
+    'Cow', 'Pig', 'Sheep', 'Goat', 'Chicken', 'Duck', 'Eagle', 'Owl', 'Parrot',
+    'Penguin', 'Dolphin', 'Whale', 'Shark', 'Fish', 'Octopus', 'Crab', 'Butterfly',
+    'Bee', 'Spider', 'Ant', 'Snake', 'Lizard', 'Turtle', 'Frog', 'Kangaroo', 'Koala'
+  ],
+  movies: [
+    'Titanic', 'Avatar', 'Star Wars', 'Jurassic Park', 'The Matrix', 'Superman', 'Batman',
+    'Spider-Man', 'Iron Man', 'Avengers', 'Frozen', 'Finding Nemo', 'Toy Story',
+    'Shrek', 'The Lion King', 'Beauty and the Beast', 'Aladdin', 'Cinderella',
+    'Snow White', 'Pinocchio', 'Bambi', 'Dumbo', 'Cars', 'Monsters Inc', 'Up',
+    'Wall-E', 'Ratatouille', 'The Incredibles', 'Inside Out', 'Moana', 'Coco',
+    'Harry Potter', 'Lord of the Rings', 'Indiana Jones', 'James Bond', 'Mission Impossible'
+  ],
+  food: [
+    'Pizza', 'Burger', 'Hot Dog', 'Sandwich', 'Pasta', 'Spaghetti', 'Lasagna', 'Tacos',
+    'Burrito', 'Sushi', 'Ramen', 'Fried Rice', 'Steak', 'Chicken', 'Fish', 'Salmon',
+    'Lobster', 'Shrimp', 'Ice Cream', 'Cake', 'Cookies', 'Chocolate', 'Candy',
+    'Popcorn', 'French Fries', 'Onion Rings', 'Nachos', 'Salad', 'Soup', 'Bread',
+    'Pancakes', 'Waffles', 'Toast', 'Cereal', 'Oatmeal', 'Yogurt', 'Cheese',
+    'Apple Pie', 'Donuts', 'Muffins', 'Bagels', 'Croissant', 'Pretzel'
+  ],
+  professions: [
+    'Doctor', 'Nurse', 'Teacher', 'Police Officer', 'Firefighter', 'Lawyer', 'Engineer',
+    'Architect', 'Chef', 'Waiter', 'Pilot', 'Flight Attendant', 'Mechanic', 'Electrician',
+    'Plumber', 'Carpenter', 'Painter', 'Artist', 'Musician', 'Actor', 'Writer',
+    'Journalist', 'Photographer', 'Dentist', 'Veterinarian', 'Pharmacist', 'Scientist',
+    'Researcher', 'Accountant', 'Banker', 'Real Estate Agent', 'Sales Person',
+    'Manager', 'Secretary', 'Librarian', 'Farmer', 'Fisherman', 'Barber', 'Hairdresser',
+    'Mail Carrier', 'Bus Driver', 'Taxi Driver', 'Security Guard', 'Janitor'
+  ]
+};
+
+// Game state
+let currentCategory = '';
+let currentWords = [];
+let currentWordIndex = 0;
+let score = 0;
+let correctCount = 0;
+let skippedCount = 0;
+let gameTime = 60;
+let timeLeft = 60;
+let gameTimer = null;
+let playedWords = [];
+let gameActive = false;
+
+// Device orientation support
+let deviceOrientationSupported = false;
+let lastOrientation = 0;
+
+// DOM elements
+const screens = {
+  category: document.getElementById('category-screen'),
+  setup: document.getElementById('setup-screen'),
+  countdown: document.getElementById('countdown-screen'),
+  game: document.getElementById('game-screen'),
+  results: document.getElementById('results-screen')
+};
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+  setupEventListeners();
+  checkDeviceOrientation();
+});
+
+function setupEventListeners() {
+  // Category selection
+  document.querySelectorAll('.category-button').forEach(btn => {
+    btn.addEventListener('click', selectCategory);
+  });
+
+  // Game setup
+  document.getElementById('start-game-btn').addEventListener('click', startCountdown);
+  
+  // Game controls
+  document.getElementById('correct-btn').addEventListener('click', () => handleAnswer(true));
+  document.getElementById('skip-btn').addEventListener('click', () => handleAnswer(false));
+  document.getElementById('pause-btn').addEventListener('click', pauseGame);
+
+  // Results screen
+  document.getElementById('play-again-btn').addEventListener('click', playAgain);
+  document.getElementById('change-category-btn').addEventListener('click', changeCategory);
+}
+
+function checkDeviceOrientation() {
+  if (window.DeviceOrientationEvent) {
+    deviceOrientationSupported = true;
+    window.addEventListener('deviceorientation', handleDeviceOrientation);
+  }
+}
+
+function handleDeviceOrientation(event) {
+  if (!gameActive) return;
+
+  const beta = event.beta; // Front-to-back tilt (-180 to 180)
+  
+  // Tilt down (beta > 30) = Correct
+  if (beta > 30 && lastOrientation <= 30) {
+    handleAnswer(true);
+  }
+  // Tilt up (beta < -30) = Skip
+  else if (beta < -30 && lastOrientation >= -30) {
+    handleAnswer(false);
+  }
+  
+  lastOrientation = beta;
+}
+
+function selectCategory(event) {
+  const category = event.currentTarget.dataset.category;
+  currentCategory = category;
+  currentWords = [...categories[category]];
+  shuffleArray(currentWords);
+  showScreen('setup');
+}
+
+function showScreen(screenName) {
+  Object.values(screens).forEach(screen => screen.classList.remove('active'));
+  screens[screenName].classList.add('active');
+}
+
+function startCountdown() {
+  gameTime = parseInt(document.getElementById('round-time').value);
+  timeLeft = gameTime;
+  showScreen('countdown');
+  
+  let count = 3;
+  const countdownElement = document.getElementById('countdown-number');
+  
+  const countdownInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdownElement.textContent = count;
+    } else {
+      clearInterval(countdownInterval);
+      startGame();
+    }
+  }, 1000);
+}
+
+function startGame() {
+  showScreen('game');
+  gameActive = true;
+  score = 0;
+  correctCount = 0;
+  skippedCount = 0;
+  currentWordIndex = 0;
+  playedWords = [];
+  
+  updateDisplay();
+  startTimer();
+}
+
+function updateDisplay() {
+  if (currentWordIndex >= currentWords.length) {
+    // Reshuffle if we run out of words
+    shuffleArray(currentWords);
+    currentWordIndex = 0;
+  }
+
+  document.getElementById('current-word').textContent = currentWords[currentWordIndex];
+  document.getElementById('current-category').textContent = currentCategory.toUpperCase();
+  document.getElementById('score-value').textContent = score;
+}
+
+function handleAnswer(correct) {
+  if (!gameActive) return;
+
+  const word = currentWords[currentWordIndex];
+  playedWords.push({ word, correct });
+
+  if (correct) {
+    score += 1;
+    correctCount += 1;
+    showFeedback('✅ Correct!', 'correct');
+  } else {
+    skippedCount += 1;
+    showFeedback('⏭️ Skipped', 'skip');
+  }
+
+  currentWordIndex++;
+  setTimeout(() => {
+    updateDisplay();
+  }, 800);
+}
+
+function showFeedback(message, type) {
+  const feedback = document.createElement('div');
+  feedback.className = `feedback-popup ${type}`;
+  feedback.textContent = message;
+  document.querySelector('.game-play-area').appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 800);
+}
+
+function startTimer() {
+  const timerDisplay = document.getElementById('timer-display');
+  const timerProgress = document.getElementById('timer-progress');
+  
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const progress = ((gameTime - timeLeft) / gameTime) * 100;
+    timerProgress.style.width = `${progress}%`;
+    
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function pauseGame() {
+  gameActive = false;
+  clearInterval(gameTimer);
+  // Could add pause screen here
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(gameTimer);
+  showResults();
+}
+
+function showResults() {
+  showScreen('results');
+  
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('skipped-count').textContent = skippedCount;
+  
+  const totalAttempts = correctCount + skippedCount;
+  const successRate = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+  document.getElementById('success-rate').textContent = `${successRate}%`;
+  
+  displayWordsReview();
+}
+
+function displayWordsReview() {
+  const wordsList = document.getElementById('words-list');
+  wordsList.innerHTML = '';
+  
+  playedWords.forEach(({ word, correct }) => {
+    const wordItem = document.createElement('div');
+    wordItem.className = `word-review-item ${correct ? 'correct' : 'skipped'}`;
+    wordItem.innerHTML = `
+      <span class="word-text">${word}</span>
+      <span class="word-result">${correct ? '✅' : '⏭️'}</span>
+    `;
+    wordsList.appendChild(wordItem);
+  });
+}
+
+function playAgain() {
+  currentWords = [...categories[currentCategory]];
+  shuffleArray(currentWords);
+  startCountdown();
+}
+
+function changeCategory() {
+  showScreen('category');
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+</script>
+{% endblock %}
