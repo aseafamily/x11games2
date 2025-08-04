@@ -622,8 +622,8 @@ main h2 {
     }
 }
 
-/* Heads Up Game Specific Styles */
-.headsup-container {
+/* Charades Game Specific Styles */
+.charades-container {
     position: relative;
     z-index: 1;
     max-width: 900px;
@@ -632,13 +632,13 @@ main h2 {
     min-height: 100vh;
 }
 
-.headsup-header {
+.charades-header {
     text-align: center;
     margin-bottom: 2rem;
     animation: fadeInDown 1s ease-out;
 }
 
-.headsup-header h1 {
+.charades-header h1 {
     font-size: clamp(2rem, 4vw, 3rem);
     background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24);
     background-size: 400% 400%;
@@ -801,6 +801,28 @@ main h2 {
 .start-button:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 12px 35px rgba(0, 255, 0, 0.5);
+}
+
+.orientation-button {
+    background: linear-gradient(135deg, #ffa500, #ff8c00);
+    border: 2px solid #ffa500;
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 1rem auto;
+    display: block;
+    box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+}
+
+.orientation-button:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 165, 0, 0.5);
 }
 
 /* Countdown Screen */
@@ -1062,6 +1084,16 @@ main h2 {
     text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
 }
 
+.performance-message {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffa500;
+    text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+    text-align: center;
+    animation: pulse 2s ease-in-out infinite;
+}
+
 .results-stats {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 15px;
@@ -1173,9 +1205,84 @@ main h2 {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
-/* Mobile responsiveness for heads up */
+/* Fullscreen landscape mode */
+body.fullscreen-game {
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.fullscreen-game #game-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+body.fullscreen-game .game-play-area {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+body.fullscreen-game .current-word {
+    font-size: clamp(3rem, 12vw, 8rem);
+    line-height: 1;
+}
+
+body.fullscreen-game .timer-section {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0;
+}
+
+body.fullscreen-game .score-section {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    margin-bottom: 0;
+}
+
+body.fullscreen-game .controls-section {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 2rem;
+}
+
+body.fullscreen-game .tilt-instructions {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4rem;
+}
+
+body.fullscreen-game .pause-button {
+    top: 20px;
+    right: 20px;
+}
+
+/* Mobile responsiveness for charades */
 @media (max-width: 768px) {
-    .headsup-container {
+    .charades-container {
         padding: 15px;
     }
     

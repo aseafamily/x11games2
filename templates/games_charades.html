@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}🎭 Heads Up! Challenge - X11 Games{% endblock %}
+{% block title %}🎭 Charades Challenge - X11 Games{% endblock %}
 
 {% block content %}
-<div class="headsup-container">
-  <header class="headsup-header">
-    <h1>🎭 HEADS UP! CHALLENGE</h1>
+<div class="charades-container">
+  <header class="charades-header">
+    <h1>🎭 CHARADES CHALLENGE</h1>
     <p style="color: #ffa500; font-size: clamp(1rem, 2.5vw, 1.2rem); text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);">
-      🎪 Give clues! Guess the word! Beat the clock!
+      🎪 How many words can you guess? Race against time!
     </p>
     <div style="margin-top: 1rem;">
       <a href="/" style="color: #00ffff; text-decoration: none; font-size: 0.9rem; opacity: 0.8;">← Back to Game Hub</a>
@@ -53,24 +53,33 @@
       <h2>🎮 Game Setup</h2>
       <div class="setup-content">
         <div class="setup-section">
-          <h3>📱 How to Play:</h3>
+          <h3>🎭 How to Play Charades:</h3>
           <ol class="instructions">
-            <li>One player holds the device on their forehead</li>
-            <li>Other players give clues about the word they see</li>
-            <li>Tilt device DOWN for correct guess</li>
-            <li>Tilt device UP to skip/pass</li>
-            <li>Beat the clock to score points!</li>
+            <li>One player holds the device (others see the word upside down)</li>
+            <li>Act out the word WITHOUT speaking - use gestures, movements, and expressions!</li>
+            <li>Team tries to guess the word as quickly as possible</li>
+            <li>Tilt device DOWN when word is guessed correctly</li>
+            <li>Tilt device UP to skip if too difficult</li>
+            <li>Goal: Guess as many words as possible within the time limit!</li>
           </ol>
         </div>
         
         <div class="setup-section">
           <label for="round-time">⏱️ Round Time:</label>
           <select id="round-time" class="time-selector">
-            <option value="30">30 seconds</option>
-            <option value="60" selected>1 minute</option>
+            <option value="60">1 minute</option>
             <option value="90">90 seconds</option>
             <option value="120">2 minutes</option>
+            <option value="180" selected>3 minutes</option>
+            <option value="240">4 minutes</option>
+            <option value="300">5 minutes</option>
           </select>
+        </div>
+
+        <div id="orientation-permission" class="setup-section" style="display: none;">
+          <h3>📱 Device Motion Required</h3>
+          <p>For tilt controls to work, we need permission to access device motion.</p>
+          <button id="request-orientation-btn" class="orientation-button">Enable Tilt Controls</button>
         </div>
 
         <button id="start-game-btn" class="start-button">🚀 Start Game</button>
@@ -84,7 +93,7 @@
       <div class="countdown-display">
         <h2>Get Ready!</h2>
         <div id="countdown-number" class="countdown-number">3</div>
-        <div class="countdown-text">Place device on forehead and tilt to play!</div>
+        <div class="countdown-text">Ready to act fast? How many can you guess?</div>
       </div>
     </div>
   </div>
@@ -100,10 +109,10 @@
         </div>
       </div>
 
-      <!-- Score -->
+      <!-- Words Guessed -->
       <div class="score-section">
         <div class="score-display">
-          <span class="score-label">Score:</span>
+          <span class="score-label">Words:</span>
           <span id="score-value" class="score-value">0</span>
         </div>
       </div>
@@ -151,8 +160,9 @@
         <div class="final-score">
           <div class="score-circle">
             <span id="final-score" class="final-score-number">0</span>
-            <span class="score-label">Points</span>
+            <span class="score-label">Words Guessed</span>
           </div>
+          <div id="performance-message" class="performance-message"></div>
         </div>
         
         <div class="results-stats">
@@ -163,6 +173,10 @@
           <div class="stat-row">
             <span>Skipped:</span>
             <span id="skipped-count">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Words per Minute:</span>
+            <span id="words-per-minute">0</span>
           </div>
           <div class="stat-row">
             <span>Success Rate:</span>
@@ -251,13 +265,15 @@ let gameActive = false;
 
 // Device orientation support
 let deviceOrientationSupported = false;
-let lastOrientation = 0;
+let lastBeta = 0;
+let orientationThreshold = 45; // degrees
+let orientationCooldown = false;
 
 // DOM elements
 const screens = {
   category: document.getElementById('category-screen'),
   setup: document.getElementById('setup-screen'),
-  countdown: document.getElementById('countdown-screen'),
+  countdown: document.getElementById('countdown-screen'),  
   game: document.getElementById('game-screen'),
   results: document.getElementById('results-screen')
 };
@@ -265,7 +281,7 @@ const screens = {
 // Initialize game
 document.addEventListener('DOMContentLoaded', function() {
   setupEventListeners();
-  checkDeviceOrientation();
+  requestDeviceOrientation();
 });
 
 function setupEventListeners() {
@@ -276,6 +292,7 @@ function setupEventListeners() {
 
   // Game setup
   document.getElementById('start-game-btn').addEventListener('click', startCountdown);
+  document.getElementById('request-orientation-btn').addEventListener('click', requestDeviceOrientation);
   
   // Game controls
   document.getElementById('correct-btn').addEventListener('click', () => handleAnswer(true));
@@ -287,28 +304,33 @@ function setupEventListeners() {
   document.getElementById('change-category-btn').addEventListener('click', changeCategory);
 }
 
-function checkDeviceOrientation() {
-  if (window.DeviceOrientationEvent) {
+async function requestDeviceOrientation() {
+  // For iOS 13+ devices, we need to request permission
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Show the permission request button
+    document.getElementById('orientation-permission').style.display = 'block';
+    
+    try {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission === 'granted') {
+        deviceOrientationSupported = true;
+        window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+        console.log('Device orientation permission granted');
+        document.getElementById('orientation-permission').style.display = 'none';
+      } else {
+        console.log('Device orientation permission denied');
+      }
+    } catch (error) {
+      console.log('Error requesting device orientation permission:', error);
+    }
+  } else if (window.DeviceOrientationEvent) {
+    // For other devices
     deviceOrientationSupported = true;
-    window.addEventListener('deviceorientation', handleDeviceOrientation);
+    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+    console.log('Device orientation supported');
+  } else {
+    console.log('Device orientation not supported');
   }
-}
-
-function handleDeviceOrientation(event) {
-  if (!gameActive) return;
-
-  const beta = event.beta; // Front-to-back tilt (-180 to 180)
-  
-  // Tilt down (beta > 30) = Correct
-  if (beta > 30 && lastOrientation <= 30) {
-    handleAnswer(true);
-  }
-  // Tilt up (beta < -30) = Skip
-  else if (beta < -30 && lastOrientation >= -30) {
-    handleAnswer(false);
-  }
-  
-  lastOrientation = beta;
 }
 
 function selectCategory(event) {
@@ -317,7 +339,45 @@ function selectCategory(event) {
   currentWords = [...categories[category]];
   shuffleArray(currentWords);
   showScreen('setup');
+  
+  // Check if we need to show orientation permission for iOS
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function' && !deviceOrientationSupported) {
+    document.getElementById('orientation-permission').style.display = 'block';
+  }
 }
+
+function handleDeviceOrientation(event) {
+  if (!gameActive || orientationCooldown) return;
+
+  const beta = event.beta; // Front-to-back tilt (-180 to 180)
+  
+  if (beta === null || beta === undefined) return;
+  
+  console.log('Device orientation beta:', beta);
+  
+  // Tilt forward/down (beta > threshold) = Correct
+  if (beta > orientationThreshold && lastBeta <= orientationThreshold) {
+    console.log('Tilt DOWN detected - Correct!');
+    handleAnswer(true);
+    triggerOrientationCooldown();
+  }
+  // Tilt backward/up (beta < -threshold) = Skip
+  else if (beta < -orientationThreshold && lastBeta >= -orientationThreshold) {
+    console.log('Tilt UP detected - Skip!');
+    handleAnswer(false);
+    triggerOrientationCooldown();
+  }
+  
+  lastBeta = beta;
+}
+
+function triggerOrientationCooldown() {
+  orientationCooldown = true;
+  setTimeout(() => {
+    orientationCooldown = false;
+  }, 1000); // 1 second cooldown
+}
+
 
 function showScreen(screenName) {
   Object.values(screens).forEach(screen => screen.classList.remove('active'));
@@ -352,8 +412,78 @@ function startGame() {
   currentWordIndex = 0;
   playedWords = [];
   
+  // Enter fullscreen landscape mode
+  enterFullscreenLandscape();
+  
   updateDisplay();
   startTimer();
+}
+
+async function enterFullscreenLandscape() {
+  try {
+    // Request fullscreen
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen.requestFullscreen) {
+      await gameScreen.requestFullscreen();
+    } else if (gameScreen.webkitRequestFullscreen) {
+      await gameScreen.webkitRequestFullscreen();
+    } else if (gameScreen.msRequestFullscreen) {
+      await gameScreen.msRequestFullscreen();
+    }
+    
+    // Lock to landscape orientation
+    if (screen.orientation && screen.orientation.lock) {
+      try {
+        await screen.orientation.lock('landscape');
+        console.log('Screen locked to landscape');
+      } catch (e) {
+        console.log('Could not lock screen orientation:', e);
+      }
+    } else if (screen.lockOrientation) {
+      screen.lockOrientation('landscape');
+    } else if (screen.webkitLockOrientation) {
+      screen.webkitLockOrientation('landscape');
+    } else if (screen.mozLockOrientation) {
+      screen.mozLockOrientation('landscape');
+    }
+    
+    // Add fullscreen class for styling
+    document.body.classList.add('fullscreen-game');
+    
+  } catch (error) {
+    console.log('Fullscreen request failed:', error);
+    // Continue without fullscreen if it fails
+  }
+}
+
+function exitFullscreenLandscape() {
+  try {
+    // Exit fullscreen
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+    
+    // Unlock screen orientation
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    } else if (screen.unlockOrientation) {
+      screen.unlockOrientation();
+    } else if (screen.webkitUnlockOrientation) {
+      screen.webkitUnlockOrientation();
+    } else if (screen.mozUnlockOrientation) {
+      screen.mozUnlockOrientation();
+    }
+    
+    // Remove fullscreen class
+    document.body.classList.remove('fullscreen-game');
+    
+  } catch (error) {
+    console.log('Exit fullscreen failed:', error);
+  }
 }
 
 function updateDisplay() {
@@ -429,6 +559,10 @@ function pauseGame() {
 function endGame() {
   gameActive = false;
   clearInterval(gameTimer);
+  
+  // Exit fullscreen landscape mode
+  exitFullscreenLandscape();
+  
   showResults();
 }
 
@@ -442,6 +576,31 @@ function showResults() {
   const totalAttempts = correctCount + skippedCount;
   const successRate = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
   document.getElementById('success-rate').textContent = `${successRate}%`;
+  
+  // Calculate words per minute based on correct guesses
+  const gameTimeMinutes = gameTime / 60;
+  const wordsPerMinute = gameTimeMinutes > 0 ? Math.round(correctCount / gameTimeMinutes) : 0;
+  document.getElementById('words-per-minute').textContent = wordsPerMinute;
+  
+  // Add performance message
+  let performanceMessage = '';
+  if (wordsPerMinute >= 20) {
+    performanceMessage = '🔥 INCREDIBLE! You\'re a Charades master!';
+  } else if (wordsPerMinute >= 15) {
+    performanceMessage = '⭐ EXCELLENT! Amazing teamwork!';
+  } else if (wordsPerMinute >= 10) {
+    performanceMessage = '👏 GREAT JOB! Well done team!';
+  } else if (wordsPerMinute >= 5) {
+    performanceMessage = '👍 GOOD START! Keep practicing!';
+  } else {
+    performanceMessage = '🎭 Nice try! Charades takes practice!';
+  }
+  
+  // Add performance message to results if element exists
+  const perfElement = document.getElementById('performance-message');
+  if (perfElement) {
+    perfElement.textContent = performanceMessage;
+  }
   
   displayWordsReview();
 }
