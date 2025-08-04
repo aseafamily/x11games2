@@ -2,6 +2,88 @@
 
 {% block title %}🎭 Charades Challenge - X11 Games{% endblock %}
 
+{% block head %}
+<style>
+/* NO rotation for setup pages - only normal view */
+
+/* Game screen rotation - ONLY when game is active */
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  #game-screen.active {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    width: 100vh !important;
+    height: 100vw !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -50vw !important;
+    margin-left: -50vh !important;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  
+  #game-screen.active .game-play-area {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+  
+  #game-screen.active .timer-section {
+    position: static;
+    margin: 0;
+    text-align: center;
+  }
+  
+  #game-screen.active .timer-display {
+    font-size: clamp(2rem, 6vw, 3rem);
+    color: #ffa500;
+    text-shadow: 0 0 20px rgba(255, 165, 0, 0.8);
+  }
+  
+  #game-screen.active .word-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #game-screen.active .current-word {
+    font-size: clamp(4rem, 15vw, 8rem);
+    line-height: 1;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  #game-screen.active .score-section {
+    position: static;
+    margin: 0;
+    text-align: center;
+  }
+  
+  #game-screen.active .score-value {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: #00ffff;
+    text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="charades-container">
   <header class="charades-header">
@@ -55,11 +137,11 @@
         <div class="setup-section">
           <h3>🎭 How to Play Charades:</h3>
           <ol class="instructions">
-            <li>One player holds the device (others see the word upside down)</li>
-            <li>Act out the word WITHOUT speaking - use gestures, movements, and expressions!</li>
+            <li>One player holds the device facing the team (everyone can see the word)</li>  
+            <li>That player acts out the word WITHOUT speaking - use gestures, movements, and expressions!</li>
             <li>Team tries to guess the word as quickly as possible</li>
-            <li>Tilt device DOWN when word is guessed correctly</li>
-            <li>Tilt device UP to skip if too difficult</li>
+            <li>Tilt device DOWN significantly when word is guessed correctly</li>
+            <li>Tilt device UP significantly to skip if too difficult</li>
             <li>Goal: Guess as many words as possible within the time limit!</li>
           </ol>
         </div>
@@ -101,54 +183,27 @@
   <!-- Game Play Screen -->
   <div id="game-screen" class="game-screen">
     <div class="game-play-area">
-      <!-- Timer -->
+      <!-- Timer at top -->
       <div class="timer-section">
-        <div id="timer-display" class="timer-display">01:00</div>
-        <div class="timer-bar">
-          <div id="timer-progress" class="timer-progress"></div>
-        </div>
+        <div id="timer-display" class="timer-display">03:00</div>
       </div>
 
-      <!-- Words Guessed -->
-      <div class="score-section">
-        <div class="score-display">
-          <span class="score-label">Words:</span>
-          <span id="score-value" class="score-value">0</span>
-        </div>
-      </div>
-
-      <!-- Word Display -->
+      <!-- Word Display - Main focus -->
       <div class="word-section">
         <div id="current-word" class="current-word">EXAMPLE</div>
-        <div class="category-label">
-          Category: <span id="current-category">Sports</span>
-        </div>
       </div>
 
-      <!-- Controls (for non-tilt devices) -->
-      <div class="controls-section">
-        <button id="correct-btn" class="control-button correct-button">
-          ✅ Correct!
-        </button>
-        <button id="skip-btn" class="control-button skip-button">
-          ⏭️ Skip
-        </button>
+      <!-- Simple score at bottom -->
+      <div class="score-section">
+        <div id="score-value" class="score-value">0</div>
+        <div style="font-size: 0.8em; opacity: 0.8;">words guessed</div>
       </div>
 
-      <!-- Tilt Instructions -->
-      <div class="tilt-instructions">
-        <div class="tilt-instruction">
-          <div class="tilt-icon down">📱⬇️</div>
-          <div>Tilt DOWN for Correct</div>
-        </div>
-        <div class="tilt-instruction">
-          <div class="tilt-icon up">📱⬆️</div>
-          <div>Tilt UP to Skip</div>
-        </div>
+      <!-- Hidden controls for fallback -->
+      <div class="controls-section" style="display: none;">
+        <button id="correct-btn" class="control-button correct-button">✅ Correct!</button>
+        <button id="skip-btn" class="control-button skip-button">⏭️ Skip</button>
       </div>
-
-      <!-- Pause Button -->
-      <button id="pause-btn" class="pause-button">⏸️</button>
     </div>
   </div>
 
@@ -266,7 +321,7 @@ let gameActive = false;
 // Device orientation support
 let deviceOrientationSupported = false;
 let lastBeta = 0;
-let orientationThreshold = 45; // degrees
+let orientationThreshold = 75; // degrees - requires more deliberate tilt
 let orientationCooldown = false;
 
 // DOM elements
@@ -318,10 +373,12 @@ async function requestDeviceOrientation() {
         console.log('Device orientation permission granted');
         document.getElementById('orientation-permission').style.display = 'none';
       } else {
-        console.log('Device orientation permission denied');
+        console.log('Device orientation permission denied - showing controls');
+        showFallbackControls();
       }
     } catch (error) {
       console.log('Error requesting device orientation permission:', error);
+      showFallbackControls();
     }
   } else if (window.DeviceOrientationEvent) {
     // For other devices
@@ -329,8 +386,19 @@ async function requestDeviceOrientation() {
     window.addEventListener('deviceorientation', handleDeviceOrientation, true);
     console.log('Device orientation supported');
   } else {
-    console.log('Device orientation not supported');
+    console.log('Device orientation not supported - showing controls');
+    showFallbackControls();
   }
+}
+
+function showFallbackControls() {
+  // Show the control buttons if tilt doesn't work
+  setTimeout(() => {
+    const controls = document.querySelector('.controls-section');
+    if (controls && gameActive) {
+      controls.style.display = 'flex';
+    }
+  }, 3000); // Show after 3 seconds if no tilt detected
 }
 
 function selectCategory(event) {
@@ -379,6 +447,7 @@ function triggerOrientationCooldown() {
 }
 
 
+
 function showScreen(screenName) {
   Object.values(screens).forEach(screen => screen.classList.remove('active'));
   screens[screenName].classList.add('active');
@@ -421,21 +490,11 @@ function startGame() {
 
 async function enterFullscreenLandscape() {
   try {
-    // Request fullscreen
-    const gameScreen = document.getElementById('game-screen');
-    if (gameScreen.requestFullscreen) {
-      await gameScreen.requestFullscreen();
-    } else if (gameScreen.webkitRequestFullscreen) {
-      await gameScreen.webkitRequestFullscreen();
-    } else if (gameScreen.msRequestFullscreen) {
-      await gameScreen.msRequestFullscreen();
-    }
-    
-    // Lock to landscape orientation
+    // First, lock to landscape orientation (this will make iPhone show landscape mode even in portrait)
     if (screen.orientation && screen.orientation.lock) {
       try {
         await screen.orientation.lock('landscape');
-        console.log('Screen locked to landscape');
+        console.log('Screen locked to landscape - iPhone will show landscape mode');
       } catch (e) {
         console.log('Could not lock screen orientation:', e);
       }
@@ -447,11 +506,21 @@ async function enterFullscreenLandscape() {
       screen.mozLockOrientation('landscape');
     }
     
+    // Then request fullscreen
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen.requestFullscreen) {
+      await gameScreen.requestFullscreen();
+    } else if (gameScreen.webkitRequestFullscreen) {
+      await gameScreen.webkitRequestFullscreen();
+    } else if (gameScreen.msRequestFullscreen) {
+      await gameScreen.msRequestFullscreen();
+    }
+    
     // Add fullscreen class for styling
     document.body.classList.add('fullscreen-game');
     
   } catch (error) {
-    console.log('Fullscreen request failed:', error);
+    console.log('Fullscreen/landscape request failed:', error);
     // Continue without fullscreen if it fails
   }
 }
