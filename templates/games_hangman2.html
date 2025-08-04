@@ -1,117 +1,54 @@
 {% extends "base.html" %}
 
-{% block title %}Hangman Game{% endblock %}
-
-{% block head %}
-  <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-      background: #f4f4f4;
-    }
-
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-
-    #word-display {
-      font-size: 2rem;
-      letter-spacing: 0.5rem;
-      margin: 1rem 0;
-    }
-
-    #tries {
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-      color: #555;
-    }
-
-    #alphabet {
-      display: flex;
-      flex-wrap: wrap;
-      max-width: 600px;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    #alphabet button {
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 5px;
-      background: #3498db;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    #alphabet button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    #status {
-      margin-top: 1rem;
-      font-size: 1.2rem;
-    }
-
-    #word-definition {
-      margin-top: 1rem;
-      font-size: 1rem;
-      color: #666;
-      max-width: 600px;
-      text-align: center;
-    }
-
-    #reset-button {
-      display: none;
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      background: #2ecc71;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 500px) {
-      #alphabet button {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
-      }
-    }
-  </style>
-{% endblock %}
+{% block title %}🎪 Hangman Challenge - X11 Games{% endblock %}
 
 {% block content %}
-  <h1>Hangman</h1>
-  <div id="word-display"></div>
-  <div id="tries"></div>
-  <div id="alphabet"></div>
-  <div id="status"></div>
-  <div id="word-definition"></div>
-  <button id="reset-button">Play Again</button>
-  
-  <!-- Add session summary section -->
-  <div id="session-summary" style="margin-top: 2rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 600px; width: 100%;">
-    <h2>Session Summary</h2>
-    <div id="stats" style="margin-bottom: 1rem;">
-      <p>Games Played: <span id="games-played">0</span></p>
-      <p>Wins: <span id="wins">0</span></p>
-      <p>Win Rate: <span id="win-rate">0%</span></p>
-      <p>Average Tries: <span id="avg-tries">0</span></p>
+<div class="hangman-container">
+  <header class="hangman-header">
+    <h1>🎪 HANGMAN CHALLENGE</h1>
+    <p style="color: #ffa500; font-size: clamp(1rem, 2.5vw, 1.2rem); text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);">
+      🧠 Test Your Word Skills! Decode the Mystery Word!
+    </p>
+    <div style="margin-top: 1rem;">
+      <a href="/" style="color: #00ffff; text-decoration: none; font-size: 0.9rem; opacity: 0.8;">← Back to Game Hub</a>
     </div>
-    <div id="word-history">
-      <h3>Played Words</h3>
-      <ul id="word-list" style="list-style: none; padding: 0;"></ul>
+  </header>
+  
+  <div class="game-area">
+    <div id="word-display" class="word-display"></div>
+    <div id="tries" class="tries-display"></div>
+    <div id="alphabet" class="alphabet-container"></div>
+    <div id="status" class="game-status"></div>
+    <div id="word-definition" class="word-definition"></div>
+    <button id="reset-button" class="reset-button" style="display: none;">🎮 Play Again</button>
+  </div>
+  
+  <div id="session-summary" class="session-summary">
+    <h2>🏆 Session Summary</h2>
+    <div id="stats" class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="games-played">0</div>
+        <div>Games Played</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="wins">0</div>
+        <div>Wins</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="win-rate">0%</div>
+        <div>Win Rate</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="avg-tries">0</div>
+        <div>Avg Tries</div>
+      </div>
+    </div>
+    <div id="word-history" class="word-history">
+      <h3>📜 Played Words</h3>
+      <ul id="word-list" class="word-list"></ul>
     </div>
   </div>
+</div>
 
   <script>
     const words = [
@@ -173,6 +110,7 @@
       guessedLetters = [];
       wrongGuesses = 0;
       status.textContent = '';
+      status.className = 'game-status';
       resetButton.style.display = 'none';
     }
 
@@ -234,19 +172,16 @@
       // Add word to history
       const wordList = document.getElementById('word-list');
       const listItem = document.createElement('li');
-      listItem.style.padding = '0.5rem 0';
-      listItem.style.borderBottom = '1px solid #eee';
+      listItem.className = 'word-list-item';
       listItem.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <span style="font-weight: bold;">${selectedWord}</span>
-            <span style="margin-left: 1rem; color: ${won ? '#2ecc71' : '#e74c3c'}">
-              ${won ? '✓' : '✗'}
-            </span>
-          </div>
-          <div style="color: #666;">
-            Tries: ${wrongGuesses}/${maxWrongGuesses}
-          </div>
+        <div class="word-info">
+          <span class="word-name">${selectedWord.toUpperCase()}</span>
+          <span class="word-status ${won ? 'win' : 'lose'}">
+            ${won ? '✓' : '✗'}
+          </span>
+        </div>
+        <div class="word-tries">
+          ${wrongGuesses}/${maxWrongGuesses} tries
         </div>
       `;
       wordList.insertBefore(listItem, wordList.firstChild);
@@ -261,16 +196,18 @@
       triesDisplay.textContent = `Tries used: ${wrongGuesses} / ${maxWrongGuesses} | Tries left: ${maxWrongGuesses - wrongGuesses}`;
 
       if (wordDisplay.textContent.indexOf('_') === -1) {
-        status.textContent = '🎉 You won!';
+        status.textContent = '🎉 VICTORY! You cracked the code!';
+        status.className = 'game-status status-win';
         showDefinition();
         disableAllButtons();
-        resetButton.style.display = 'inline-block';
+        resetButton.style.display = 'block';
         updateSessionStats(true);
       } else if (wrongGuesses >= maxWrongGuesses) {
-        status.textContent = `😞 You lost! The word was "${selectedWord}".`;
+        status.textContent = `💀 GAME OVER! The word was "${selectedWord.toUpperCase()}"`;
+        status.className = 'game-status status-lose';
         showDefinition();
         disableAllButtons();
-        resetButton.style.display = 'inline-block';
+        resetButton.style.display = 'block';
         updateSessionStats(false);
       }
     }
@@ -305,7 +242,11 @@
       // Disable the button and update its appearance
       if (button) {
         button.disabled = true;
-        button.style.background = selectedWord.includes(letter) ? '#2ecc71' : '#e74c3c';
+        if (selectedWord.includes(letter)) {
+          button.classList.add('correct');
+        } else {
+          button.classList.add('incorrect');
+        }
       }
 
       // Add letter to guessed letters first
@@ -338,6 +279,7 @@
       letters.forEach(letter => {
         const button = document.createElement('button');
         button.textContent = letter;
+        button.className = 'letter-button';
         button.addEventListener('click', () => handleGuess(letter, button));
         alphabetContainer.appendChild(button);
       });
